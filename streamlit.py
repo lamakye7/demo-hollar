@@ -1,49 +1,52 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
-
-
-import pickle
 import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import StandardScaler
 
-# loading the saved model
-model = pickle.load(open('stock_level_prediction.pkl', 'rb'))
+# Function to load and preprocess data
+def load_data(file):
+    df = pd.read_csv(file)
+    return df
 
+# Function for Isolation Forest anomaly detection
+def isolation_forest_anomaly_detection(data):
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(data)
+
+    isolation_forest = IsolationForest(contamination=0.1, random_state=42)
+    outliers_if = isolation_forest.fit_predict(X_scaled)
+
+    return outliers_if
+
+# Function to visualize anomalies
+def visualize_anomalies(data, outliers, title):
+    plt.scatter(data[:, 0], data[:, 1], c=outliers, cmap='viridis')
+    plt.title(title)
+    st.pyplot()
+
+# Streamlit app
 def main():
-    # Giving a title
-    st.title("Warehouse Stock Level Prediction App")
-    
-    # Input Variables
-    st.write("Please enter the following information to predict stock level:")
-    
-    Quantity = st.text_input('Quantity Sold', 'e.g., 100')
-    Total = st.text_input('Total Sales', 'e.g., 50.00')
-    Temperature = st.text_input("IoT Sensor Temperature of Product", 'e.g., 25.0')
-    Unit_price = st.text_input("Unit Price of Product", 'e.g., 10.00')
-    hour = st.text_input("Hour of the Day", 'e.g., 14')
-    
-    # Add a brief description or guide
-    st.write("Example inputs are provided in placeholders (e.g., 100, 5000).")
-    
-    # Prediction Code 
-    if st.button('Predict'):
-        # Validate and convert input values to integers or floats
-        try:
-            Quantity = int(Quantity)
-            Total = float(Total)
-            Temperature = float(Temperature)
-            Unit_price = float(Unit_price)
-            hour = int(hour)
-        except ValueError:
-            st.error("Please enter valid numeric values.")
-            return
-        
-        makeprediction = model.predict([[Quantity, Total, Temperature, Unit_price, hour]])
-        output = round(makeprediction[0], 2)
-        st.success('Predicted Stock Level is {}'.format(output))
+    st.title("Anomaly Detection App")
 
-if __name__ == '__main__':
+    # File upload
+    uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
+
+    if uploaded_file is not None:
+        # Load data
+        df = load_data(uploaded_file)
+
+        # Anomaly detection using Isolation Forest
+        anomalies_if = isolation_forest_anomaly_detection(df.values)
+
+        # Visualization
+        st.subheader("Original Data")
+        st.write(df.head())
+
+        st.subheader("Anomaly Detection Visualization using Isolation Forest")
+        visualize_anomalies(df.values, anomalies_if, "Isolation Forest Anomalies")
+
+if __name__ == "__main__":
     main()
+
