@@ -21,10 +21,20 @@ def isolation_forest_anomaly_detection(data):
     return outliers_if
 
 # Function to visualize anomalies
+# Function to visualize anomalies
 def visualize_anomalies(data, outliers, title):
-    plt.scatter(data[:, 0], data[:, 1], c=outliers, cmap='viridis')
-    plt.title(title)
-    st.pyplot()
+    fig, ax = plt.subplots()
+
+    # Plot inliers with label 'Inliers'
+    ax.scatter(data[outliers == 0, 0], data[outliers == 0, 1], label='Inliers', cmap='viridis')
+
+    # Plot outliers with label 'Outliers'
+    ax.scatter(data[outliers == 1, 0], data[outliers == 1, 1], label='Outliers', cmap='viridis', marker='x')
+
+    ax.set_title(title)
+    ax.legend()
+    st.pyplot(fig)
+
 
 # Streamlit app
 def main():
